@@ -108,9 +108,8 @@ def one_video_download(update, context):
 
     try:
         status = Download(url, user.id)
-        print(status)
         if status:
-            update.message.reply_video(video = status, reply_markup = markup_start)
+            update.message.reply_video(video = open(status, 'rb'), reply_markup = markup_start)
             os.chmod(f"rm {status}")
             return(START_CO)
         else:
@@ -134,7 +133,7 @@ def confirmation(update, context):
         try:
             status = Download(url['url'], user.id)
             if status:
-                update.message.reply_video(video = status, caption = url['title'])
+                update.message.reply_video(video = open(status, 'rb'), caption = url['title'])
                 os.chmod(f"rm {status}")
             else:
                 update.message.reply_text(f"could not download the video {url['url']}")
