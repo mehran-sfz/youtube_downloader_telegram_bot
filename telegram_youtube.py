@@ -50,11 +50,8 @@ def get_channel_url(update,context):
     if text == 'back':
         update.message.reply_text('Choose ...', reply_markup = markup_start)
         return(START_CO)
-    print('0000000000')
     id = find_channel_id(text)
-    print(id)
     if id :
-        print('22222222')
         list_of_urls = get_videos_from_channel(id)
         if list_of_urls:
             user_data['list_of_urls'] = list_of_urls
