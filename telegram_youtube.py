@@ -50,14 +50,19 @@ def get_channel_url(update,context):
     if text == 'back':
         update.message.reply_text('Choose ...', reply_markup = markup_start)
         return(START_CO)
-
+    print('0000000000')
     id = find_channel_id(text)
+    print(id)
     if id :
+        print('22222222')
         list_of_urls = get_videos_from_channel(id)
         if list_of_urls:
             user_data['list_of_urls'] = list_of_urls
-            update.message.reply_text(f'there is {len(list_of_urls)} videos on this channel', reply_markup = markup_start)
+            update.message.reply_text(f'There is {len(list_of_urls)} videos on this channel', reply_markup = markup_confirmation)
             return(CONFIRMATION)
+    else:
+        update.message.reply_text('Can not find id of channel', reply_markup = markup_start)
+        return(START_CO)
 
 def get_word_for_search(update, context):
     user_data = context.user_data
@@ -97,7 +102,6 @@ def get_number_of_videos(update, context):
     return(CONFIRMATION)
 
 def one_video_download(update, context):
-    user_data = context.user_data
     user = update.message.from_user
     text = update.message.text
     url = text.strip()
@@ -110,7 +114,7 @@ def one_video_download(update, context):
         status = Download(url, user.id)
         if status:
             update.message.reply_video(video = open(status, 'rb'), reply_markup = markup_start)
-            os.chmod(f"rm {status}")
+            os.remove(status)
             return(START_CO)
         else:
             update.message.reply_text(f"could not download the video {url}", reply_markup = markup_start)
@@ -134,7 +138,7 @@ def confirmation(update, context):
             status = Download(url['url'], user.id)
             if status:
                 update.message.reply_video(video = open(status, 'rb'), caption = url['title'])
-                os.chmod(f"rm {status}")
+                os.remove(status)
             else:
                 update.message.reply_text(f"could not download the video {url['url']}")
                 continue

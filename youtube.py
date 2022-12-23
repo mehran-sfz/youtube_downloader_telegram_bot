@@ -12,8 +12,7 @@ def find_channel_id(url):
         for meta in metas:
             if meta.get('itemprop') == 'channelId':
                 return(meta['content'])
-            else:
-                return(0)
+        return(0)
     except:
         return(0)
 
