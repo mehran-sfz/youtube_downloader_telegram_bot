@@ -249,8 +249,8 @@ if __name__ == '__main__':
 
     states = {
             START_CO : [CommandHandler('start', start),
-                        MessageHandler(Filters.regex('^download entire channel$'), start_co),
-                        MessageHandler(Filters.regex('^download with searching word$'), start_co),
+                        MessageHandler(Filters.regex('^Download entire channel$'), start_co),
+                        MessageHandler(Filters.regex('^Download with searching word$'), start_co),
                         ],
             
             GET_WORD : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_word_for_search)],
