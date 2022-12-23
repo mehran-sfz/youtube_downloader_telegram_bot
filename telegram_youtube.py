@@ -1,16 +1,12 @@
 import telegram
 from telegram.ext import Updater,CommandHandler,MessageHandler,Filters,ConversationHandler
-import logging, os, shutil
+import os, shutil
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup
 from youtube import *
 
 # find port of server 
 PORT = int(os.environ.get('PORT',5000))
 token = ''
-
-# show log of each part of code
-logging.basicConfig(filename='bin\log\log.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 START_CO, GET_WORD, GET_NUMBER,GET_CHANNEL_URL, GET_URL, CONFIRMATION = range(1, 7)
 
@@ -102,6 +98,7 @@ def get_number_of_videos(update, context):
 
 def one_video_download(update, context):
     user_data = context.user_data
+    user = update.message.from_user
     text = update.message.text
     url = text.strip()
 
@@ -110,21 +107,23 @@ def one_video_download(update, context):
         return(START_CO)
 
     try:
-        status = Download(text)
+        status = Download(url, user.id)
+        print(status)
         if status:
             update.message.reply_video(video = status, reply_markup = markup_start)
             os.chmod(f"rm {status}")
             return(START_CO)
         else:
-            update.message.reply_text(f"could not download the video {url['url']}", reply_markup = markup_start)
+            update.message.reply_text(f"could not download the video {url}", reply_markup = markup_start)
             return(START_CO)
     except:
-        update.message.reply_text(f"could not download {url['url']}", reply_markup = markup_start)
+        update.message.reply_text(f"could not download {url}", reply_markup = markup_start)
         return(START_CO)
         
 
 def confirmation(update, context):
     user_data = context.user_data
+    user = update.message.from_user
     text = update.message.text
 
     if text != 'I confirm':
@@ -133,7 +132,7 @@ def confirmation(update, context):
 
     for url in user_data['list_of_urls']:
         try:
-            status = Download(url['url'])
+            status = Download(url['url'], user.id)
             if status:
                 update.message.reply_video(video = status, caption = url['title'])
                 os.chmod(f"rm {status}")
@@ -166,7 +165,6 @@ def timeout(update, context):
     update.message.reply_text('the time is out.',reply_markup = ReplyKeyboardRemove())
 
 def error(update,context):
-    logger.warning('Update %s coused error %s ',update,context.error)
     print(update,context.error)
 
 
@@ -243,6 +241,7 @@ def remake_folder(folder_name):
 
 
 if __name__ == '__main__':
+
 
     same = [CommandHandler('cancle', cancle), MessageHandler(Filters.regex('^exit$'), stop_conversation), MessageHandler(Filters.regex('^🏠 home$'), start)]
 
