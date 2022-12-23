@@ -260,7 +260,7 @@ if __name__ == '__main__':
 
             GET_CHANNEL_URL : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_channel_url)],
 
-            GET_URL : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_videos_from_channel)],
+            GET_URL : same + [CommandHandler('start', start), MessageHandler(Filters.text , one_video_download)],
 
             CONFIRMATION : [CommandHandler('start', start), MessageHandler(Filters.regex('^I confirm$'), confirmation)],
 
