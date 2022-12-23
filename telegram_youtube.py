@@ -159,7 +159,7 @@ def cancle(update,context):
 def timeout(update, context):
     user = update.message.from_user
     try:
-        shutil.rmtree(str(user.id))
+        remake_folder(str(user.id))
     except:
         pass
 
@@ -200,7 +200,7 @@ def main():
         fallbacks = [CommandHandler('cancle', start), CommandHandler('start', start), MessageHandler(Filters.regex('^exit$'), stop_conversation),
                     MessageHandler(Filters.regex('^🏠 home$'), start_co)],
 
-        conversation_timeout = 10000, 
+        conversation_timeout = 50000, 
     )
 
 
