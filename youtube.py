@@ -2,7 +2,6 @@ import scrapetube
 import requests
 from bs4 import BeautifulSoup
 from pytube import YouTube
-import os
 
 
 def find_channel_id(url):
@@ -55,13 +54,9 @@ def Download(link, user_id):
         yt = YouTube(link)
         yt = yt.streams.filter(res = '720p', only_audio = False, file_extension = 'mp4', progressive = True)
         if yt:
-            yt[0].download(f'Downloads/{user_id}')
-            return('good')
+            status = yt[0].download(f'Downloads/{user_id}')
+            return(status)
         else:
-            return('not good quality')
+            return(0)
     except:
-        return('bad')
-
-    # TODO return name of video if it was downloaded
-
-
+        return(0)

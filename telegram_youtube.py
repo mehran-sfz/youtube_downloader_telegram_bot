@@ -112,8 +112,8 @@ def one_video_download(update, context):
     try:
         status = Download(text)
         if status:
-            update.message.reply_video(video = f"Downloads/{text}.mp4", reply_markup = markup_start)
-            os.chmod(f"rm Downloads/{url['title']}.mp4")
+            update.message.reply_video(video = status, reply_markup = markup_start)
+            os.chmod(f"rm {status}")
             return(START_CO)
         else:
             update.message.reply_text(f"could not download the video {url['url']}", reply_markup = markup_start)
@@ -135,8 +135,8 @@ def confirmation(update, context):
         try:
             status = Download(url['url'])
             if status:
-                update.message.reply_video(video = f"Downloads/{url['title']}.mp4", caption = url['title'])
-                os.chmod(f"rm Downloads/{url['title']}.mp4")
+                update.message.reply_video(video = status, caption = url['title'])
+                os.chmod(f"rm {status}")
             else:
                 update.message.reply_text(f"could not download the video {url['url']}")
                 continue
