@@ -7,12 +7,12 @@ there are three option:
 3. Download specific video
 
 
-##To start :
+# To start :
 1. make you own telegram bin ot from Botfather
 2. paset your token on telegram_youtube.py on line 9
 3. run in
 
-##Required libraries:
+# Required libraries:
 beautifulsoup : 'pip install beautifulsoup4' for linux 'pip3 install beautifulsoup4'
 python-telegram-bot : 'pip install python-telegram-bot' for linux 'pip3 install python-telegram-bot'
 scrapetube : 'pip install scrapetube' for linux 'pip3 install scrapetube'
