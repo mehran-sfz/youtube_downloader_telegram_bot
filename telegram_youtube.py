@@ -1,7 +1,8 @@
 import telegram
 from telegram.ext import Updater,CommandHandler,MessageHandler,Filters,ConversationHandler
 import logging, os, shutil
-from telegram import ReplyKeyboardRemove
+from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup
+from youtube import *
 
 # find port of server 
 PORT = int(os.environ.get('PORT',5000))
@@ -11,74 +12,148 @@ token = ''
 logging.basicConfig(filename='bin\log\log.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-START_CO, GET_WORD, GET_NUMBER, GET_URL = range(1, 5)
+START_CO, GET_WORD, GET_NUMBER,GET_CHANNEL_URL, GET_URL, CONFIRMATION = range(1, 7)
+
+reply_keyboeard_start = [['Download entire channel'],['Download with searching word'], ['Download one video'], ['exit']]
+markup_start = ReplyKeyboardMarkup(reply_keyboeard_start,resize_keyboard=True, one_time_keyboard=True)
+
+reply_keyboeard_back = [['back', '🏠 home', 'exit']]
+markup_back = ReplyKeyboardMarkup(reply_keyboeard_back,resize_keyboard=True, one_time_keyboard=True)
+
+reply_keyboeard_confirmation = [['I confirm'], ['🏠 home', 'exit']]
+markup_confirmation = ReplyKeyboardMarkup(reply_keyboeard_confirmation,resize_keyboard=True, one_time_keyboard=True)
+
+
 
 def start(update,context):
+    update.message.reply_text('Choose between options : ', reply_markup = markup_start)
+    return(START_CO)
+
+def start_co(update, context):
     user = update.message.from_user
-    user_data = context.user_data
+    text = update.message.text
 
     remake_folder(str(user.id))
 
-    user_data['number_of_photo'] = 0
-    user_data['id_account'] = user.username
+    if text == 'Download entire channel':
+        update.message.reply_text('Enter URL of one video on channel you want to download all of that videos.', reply_markup = markup_back)
+        return(GET_CHANNEL_URL)
 
-    text = 'تگ اکانت خود را وارد کنید برای مثال: UPV988V2'
-    update.message.reply_text(text, reply_markup = markup.markup_back)
-    logger.info(' user %s start to entery a account %s' , user.username , update.message.text)
-    return(TAG)
+    elif text == 'Download with searching word':
+        update.message.reply_text('Enter word you want to search.', reply_markup = markup_back)
+        return(GET_WORD)
 
-def tag(update,context):
-    user = update.message.from_user
+    elif text == 'Download one video':
+        update.message.reply_text('Enter link of that video.', reply_markup = markup_back)
+        return(GET_URL)
+
+def get_channel_url(update,context):
     user_data = context.user_data
-    tag_account = update.message.text
-    if tag_account == 'بازگشت' :
-        with open('bin/stickers/AnimatedSticker.tgs', 'rb') as file:
-            update.message.reply_sticker(file, reply_markup = markup.markup_welcome)
-            return(START_CO)
+    text = update.message.text
 
-    # remove # on tag the stupid user forgot to remove that
-    tag_account = tag_account.replace('#','')
-    tag_account = tag_account.replace(' ','')
-    tag_account= tag_account.strip()
-    category = 'tag_account'
-
-    check = supercell_api.Get_user_info_clashofclans(tag_account)
-    if check.get('reason') == 'notFound':   
-        text = 'این تگ اکانت معتبر نمیباشد لطفا تگ درست اکانت را وارد کنید.'
-        update.message.reply_text(text, reply_markup = markup.markup_back)
-        return(TAG)
-
-    elif check.get('reason') == 'accessDenied.invalidIp':
-        text = f'توکن کلش آف کلنز از کار افتاده'
-        bot.send_message(chat_id = tokens.channel_id, text = text)
-        text = 'مشکلی در ارتباط با سرور سوپرسل پیش آمده است لطفا مدتی بعد دوباره اقدام به ثبت آگهی کنید'
-        update.message.reply_text(text, reply_markup = markup.markup_welcome)
+    if text == 'back':
+        update.message.reply_text('Choose ...', reply_markup = markup_start)
         return(START_CO)
-    logger.info(' tag of %s account is %s' , user.username , update.message.text)
-    user_data[category] = tag_account
 
-    reply_sentens ='''🔶 تصاویر اکانت خود را وارد کنید و بعد بر روی گزینه "⬅️ رفتن به مرحله بعدی کلیک کنید.. \n\n🔴 توجه داشته باشید افزودن حداقل 4 تصویر الزامی میباشد 🔴'''
+    id = find_channel_id(text)
+    if id :
+        list_of_urls = get_videos_from_channel(id)
+        if list_of_urls:
+            user_data['list_of_urls'] = list_of_urls
+            update.message.reply_text(f'there is {len(list_of_urls)} videos on this channel', reply_markup = markup_start)
+            return(CONFIRMATION)
 
-    update.message.reply_text(reply_sentens, reply_markup = markup.markup_photo)
-    return(PHOTO)
+def get_word_for_search(update, context):
+    user_data = context.user_data
+    text = update.message.text
 
+    if text == 'back':
+        update.message.reply_text('Choose ...', reply_markup = markup_start)
+        return(START_CO)
+    
+    user_data['search_word'] = text
+    update.message.reply_text('How many videos you wanna download ?', reply_markup = markup_back)
+    return(GET_NUMBER)
 
+def get_number_of_videos(update, context):
+    user_data = context.user_data
+    number = update.message.text
 
+    if number == 'back':
+        update.message.reply_text('Enter word you want to search.', reply_markup = markup_back)
+        return(GET_WORD)
+    
+    try:
+        number = int(number)
+    except:
+        update.message.reply_text('Wrong input', reply_markup = markup_back)
+        return(GET_NUMBER) 
 
+    list_of_urls = find_videos_with_search(user_data['search_word'], number)
+    if list_of_urls:
+        user_data['list_of_urls'] = list_of_urls
+    
+    text = f'''
+    Search word : {user_data['search_word']}
+    Number of videos : {number}
+    If it is ok pleas confirm.'''
+    update.message.reply_text(text, reply_markup = markup_confirmation)
+    return(CONFIRMATION)
+
+def one_video_download(update, context):
+    user_data = context.user_data
+    text = update.message.text
+    url = text.strip()
+
+    if text == 'back':
+        update.message.reply_text('Choose ...', reply_markup = markup_start)
+        return(START_CO)
+
+    try:
+        status = Download(text)
+        if status:
+            update.message.reply_video(video = f"Downloads/{text}.mp4", reply_markup = markup_start)
+            os.chmod(f"rm Downloads/{url['title']}.mp4")
+            return(START_CO)
+        else:
+            update.message.reply_text(f"could not download the video {url['url']}", reply_markup = markup_start)
+            return(START_CO)
+    except:
+        update.message.reply_text(f"could not download {url['url']}", reply_markup = markup_start)
+        return(START_CO)
+        
+
+def confirmation(update, context):
+    user_data = context.user_data
+    text = update.message.text
+
+    if text != 'I confirm':
+        update.message.reply_text('Choose ...', reply_markup = markup_start)
+        return(START_CO)
+
+    for url in user_data['list_of_urls']:
+        try:
+            status = Download(url['url'])
+            if status:
+                update.message.reply_video(video = f"Downloads/{url['title']}.mp4", caption = url['title'])
+                os.chmod(f"rm Downloads/{url['title']}.mp4")
+            else:
+                update.message.reply_text(f"could not download the video {url['url']}")
+                continue
+        except:
+            update.message.reply_text(f"could not download {url['url']}", reply_markup = ReplyKeyboardRemove())
+            continue
+
+    update.message.reply_text('finish proces', reply_markup = markup_start)
+    return(START_CO)
 
 
 def stop_conversation(update,context):
-    user = update.message.from_user
-    logger.info('User %s end the convertations ', user.username)
-    update.message.reply_text('برای شروع دوباره روی /start کلیک کن' , reply_markup = ReplyKeyboardRemove())
-
+    update.message.reply_text('goodbye' , reply_markup = ReplyKeyboardRemove())
     return(ConversationHandler.END)
 
 def cancle(update,context):
-    user = update.message.from_user
-    logger.info('User %s cancled the convertations ', user.username)
-    update.message.reply_text('بدرود امیدوارم باز هم به ربات ما سر بزنی.' , reply_markup = ReplyKeyboardRemove())
-
+    update.message.reply_text('bye' , reply_markup = ReplyKeyboardRemove())
     return(ConversationHandler.END)
 
 def timeout(update, context):
@@ -86,9 +161,9 @@ def timeout(update, context):
     try:
         shutil.rmtree(str(user.id))
     except:
-        print('chat is all new ')
+        pass
 
-    update.message.reply_text('به دلیل تکمیل نکردن و استفاده نکردن از ربات به مدت طولانی چت بسته شد. برای شروع دوباره روی /start کلیک کنید.',reply_markup = ReplyKeyboardRemove())
+    update.message.reply_text('the time is out.',reply_markup = ReplyKeyboardRemove())
 
 def error(update,context):
     logger.warning('Update %s coused error %s ',update,context.error)
@@ -122,8 +197,8 @@ def main():
 
         states = states,
 
-        fallbacks = [CommandHandler('cancle', start), CommandHandler('start', start), MessageHandler(Filters.regex('^exit$'), start_fun.stop_conversation),
-                    MessageHandler(Filters.regex('^🏠 home$'), start_fun.start_co)],
+        fallbacks = [CommandHandler('cancle', start), CommandHandler('start', start), MessageHandler(Filters.regex('^exit$'), stop_conversation),
+                    MessageHandler(Filters.regex('^🏠 home$'), start_co)],
 
         conversation_timeout = 10000, 
     )
@@ -131,7 +206,7 @@ def main():
 
     dp.add_handler(conv_handler)
 
-    dp.add_error_handler(start_fun.error)
+    dp.add_error_handler(error)
 
     print('trying to connect to telegram api ...')
 
@@ -149,7 +224,7 @@ def main():
 
 def remake_folder(folder_name):
 
-    folder_name = f'users/{folder_name}'        
+    folder_name = f'Downloads/{folder_name}'        
 
     if os.path.exists(folder_name):
         for filename in os.listdir(folder_name):
@@ -174,20 +249,20 @@ if __name__ == '__main__':
 
     states = {
             START_CO : [CommandHandler('start', start),
-                        MessageHandler(Filters.regex('^🛡 ثبت آگهی Clash of Clans$'), start_to_get_info_coc),
-                        MessageHandler(Filters.regex('^⚔️ ثبت آگهی Clash Royale$'), start_to_get_info_cr),
+                        MessageHandler(Filters.regex('^download entire channel$'), start_co),
+                        MessageHandler(Filters.regex('^download with searching word$'), start_co),
                         ],
+            
+            GET_WORD : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_word_for_search)],
 
-            START_0 : [CommandHandler('start', start),
-                        MessageHandler(Filters.regex('^🟢 ورود$'), start_login),
-                        MessageHandler(Filters.regex('^🟡 ثبت نام$'), signin),
-                        ],
+            GET_NUMBER : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_number_of_videos)],
 
-            GET_PHONE_NUMBER : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_phone_number)],
+            GET_CHANNEL_URL : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_channel_url)],
 
-    print(len(states))
+            GET_URL : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_videos_from_channel)],
 
+            CONFIRMATION : [CommandHandler('start', start), MessageHandler(Filters.regex('^I confirm$'), confirmation)],
 
+            
 
-    main()
-
+    }
