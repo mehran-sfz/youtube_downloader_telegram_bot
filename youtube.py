@@ -23,7 +23,7 @@ def get_videos_from_channel(id):
         counter = 0
         for video in videos:
             url = f"https://www.youtube.com/watch?v={video['videoId']}"
-            title = {video['title']['runs'][0]['text']}
+            title = video['title']['runs'][0]['text']
             urls.append({'url' : url, 'title' : title, 'counter' : counter})
             counter += 1
         return(urls)
@@ -38,7 +38,7 @@ def find_videos_with_search(word, number):
 
         for video in videos:
             url = f"https://www.youtube.com/watch?v={video['videoId']}"
-            title = {video['title']['runs'][0]['text']}
+            title = video['title']['runs'][0]['text']
             urls.append({'url' : url, 'title' : title, 'counter' : counter})
             
             counter += 1
