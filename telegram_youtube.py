@@ -3,6 +3,7 @@ from telegram.ext import Updater,CommandHandler,MessageHandler,Filters,Conversat
 import os, shutil
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup
 from youtube import *
+import threading
 
 # find port of server 
 PORT = int(os.environ.get('PORT',5000))
@@ -10,7 +11,7 @@ token = ''
 
 START_CO, GET_WORD, GET_NUMBER,GET_CHANNEL_URL, GET_URL, CONFIRMATION = range(1, 7)
 
-reply_keyboeard_start = [['Download entire channel'],['Download with searching word'], ['Download one video'], ['exit']]
+reply_keyboeard_start = [['Download entire channel'],['Download with searching word'], ['Download one video'], ['See processes'], ['exit']]
 markup_start = ReplyKeyboardMarkup(reply_keyboeard_start,resize_keyboard=True, one_time_keyboard=True)
 
 reply_keyboeard_back = [['back', '🏠 home', 'exit']]
@@ -121,14 +122,8 @@ def one_video_download(update, context):
         return(START_CO)
         
 
-def confirmation(update, context):
-    user_data = context.user_data
-    user = update.message.from_user
-    text = update.message.text
-
-    if text != 'I confirm':
-        update.message.reply_text('Choose ...', reply_markup = markup_start)
-        return(START_CO)
+# test
+def do_downloading(user_data, user, update):
 
     for url in user_data['list_of_urls']:
         try:
@@ -142,6 +137,32 @@ def confirmation(update, context):
         except:
             update.message.reply_text(f"could not download {url['url']}", reply_markup = ReplyKeyboardRemove())
             continue
+
+def how_many_thread_is_alive(update, context):
+    user_data = context.user_data
+
+    counter = 0
+    if user_data.get('thread'):
+        for i in user_data['thread']:
+            if i.is_alive():
+                counter += 1
+
+    update.message.reply_text(f'there is {counter} process is going.', reply_markup = markup_start)
+    return(START_CO)
+
+def confirmation(update, context):
+    user_data = context.user_data
+    user = update.message.from_user
+    text = update.message.text
+
+    if text != 'I confirm':
+        update.message.reply_text('Choose ...', reply_markup = markup_start)
+        return(START_CO)
+
+    t = threading.Thread(target=do_downloading, args=(user_data, user, update))
+    t.start()
+    user_data['thread'].append(t)
+
 
     update.message.reply_text('finish proces', reply_markup = markup_start)
     return(START_CO)
@@ -251,6 +272,7 @@ if __name__ == '__main__':
                         MessageHandler(Filters.regex('^Download entire channel$'), start_co),
                         MessageHandler(Filters.regex('^Download with searching word$'), start_co),
                         MessageHandler(Filters.regex('^Download one video$'), start_co),
+                        MessageHandler(Filters.regex('^See processes$'), how_many_thread_is_alive),
                         ],
             
             GET_WORD : same + [CommandHandler('start', start), MessageHandler(Filters.text , get_word_for_search)],
