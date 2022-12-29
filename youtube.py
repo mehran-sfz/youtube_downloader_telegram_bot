@@ -51,7 +51,9 @@ def find_videos_with_search(word, number):
 def Download(link, user_id):
     try:
         yt = YouTube(link)
+        print(yt)
         yt = yt.streams.filter(res = '720p', only_audio = False, file_extension = 'mp4', progressive = True)
+        print(yt)
         if yt:
             status = yt[0].download(f'Downloads/{user_id}')
             return(status)
