@@ -56,6 +56,7 @@ def Download(link, user_id):
         print(yt)
         if yt:
             status = yt[0].download(f'Downloads/{user_id}')
+            print(status)
             return(status)
         else:
             return(0)
