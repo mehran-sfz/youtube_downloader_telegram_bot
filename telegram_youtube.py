@@ -112,7 +112,7 @@ def one_video_download(update, context):
         status = Download(url, user.id)
         if status:
             update.message.reply_video(video = open(status, 'rb'), reply_markup = markup_start)
-            os.remove(status)
+            # os.remove(status)
             return(START_CO)
         else:
             update.message.reply_text(f"could not download the video {url}", reply_markup = markup_start)
@@ -130,7 +130,7 @@ def do_downloading(user_data, user, update):
             status = Download(url['url'], user.id)
             if status:
                 update.message.reply_video(video = open(status, 'rb'), caption = url['title'])
-                os.remove(status)
+                # os.remove(status)
             else:
                 update.message.reply_text(f"could not download the video {url['url']}")
                 continue
